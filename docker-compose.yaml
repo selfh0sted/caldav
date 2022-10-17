@@ -1,0 +1,42 @@
+services:
+  caldav:
+    image: ckulka/baikal:nginx
+    container_name: baikal
+    restart: unless-stopped
+    volumes:
+      - /data/caldav/config:/var/www/baikal/config
+      - /data/caldav/data:/var/www/baikal/Specific
+    labels:
+      traefik.enable: true
+      traefik.http.routers.caldav.rule: Host(`caldav.local.app.danielr1996.de`)
+      traefik.http.routers.caldav.tls.certresolver: letsencrypt
+  webcalender:
+    image: nagimov/agendav-docker:latest
+    container_name: agendav
+    restart: unless-stopped
+    labels:
+      de.danielr1996.bashdoard.name: Kalender
+      de.danielr1996.bashdoard.url: https://calendar.local.app.danielr1996.de
+      de.danielr1996.bashdoard.icon: /img/favicon.ico
+      de.danielr1996.bashdoard.id: calendar
+      traefik.enable: true
+      traefik.http.routers.calendar.rule: Host(`calendar.local.app.danielr1996.de`)
+      traefik.http.routers.calendar.tls.certresolver: letsencrypt
+    environment:
+      - AGENDAV_CALDAV_SERVER=http://caldav/dav.php
+      - AGENDAV_SERVER_NAME=127.0.0.1
+      - AGENDAV_ENC_KEY=my_encrypt10n_k3y
+      - AGENDAV_TIMEZONE=Europe/Berlin
+      - AGENDAV_LANG=en
+      - AGENDAV_LOG_DIR=/tmp/
+  db:
+    image: mariadb
+    restart: unless-stopped
+    container_name: caldav-db
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: yes
+      MARIADB_DATABASE: caldav
+      MARIADB_USER: caldav
+      MARIADB_PASSWORD: caldav
+    volumes:
+      - /data/caldav/db:/var/lib/mysql
